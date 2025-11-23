@@ -4,7 +4,7 @@ import { API_BASE_URL } from "@/constants/api";
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
-  withCredentials: false, // keep if your backend uses cookies
+  withCredentials: true,
   headers: { "Content-Type": "application/json" },
 });
 

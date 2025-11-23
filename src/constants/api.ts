@@ -1,8 +1,7 @@
 // constants/api.ts
 
 // Base URL — prefer env, fallback for local dev
-export const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ?? "https://35.189.8.131.nip.io/api/v1";
+export const API_BASE_URL = "https://35.189.8.131.nip.io/api/v1";
 
 // Common API paths grouped by domain
 export const API = {
