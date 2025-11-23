@@ -1,7 +1,7 @@
 // constants/api.ts
 
 // Base URL — prefer env, fallback for local dev
-export const API_BASE_URL = "https://35.189.8.131.nip.io/api/v1";
+export const API_BASE_URL = "/api/v1";
 
 // Common API paths grouped by domain
 export const API = {
@@ -11,7 +11,6 @@ export const API = {
     LOGOUT: "/auth/logout",
     ME: "/auth/me",
     GOOGLE_OAUTH_START: "/auth/google",
-    // Example callback path if backend uses it:
     GOOGLE_OAUTH_CALLBACK: "/auth/google/callback",
     REFRESH_TOKEN: "/auth/refresh",
   },
