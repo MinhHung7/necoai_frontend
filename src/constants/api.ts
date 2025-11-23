@@ -16,8 +16,8 @@ export const API = {
   },
 
   WORKSPACE: {
-    CREATE: "/workspaces",
-    LIST: "/workspaces",
+    CREATE: "/workspaces/",
+    LIST: "/workspaces/",
     GET_BY_ID: (workspace_id: string) => `/workspaces/${workspace_id}`,
     SEARCH: "/workspaces/search",
     DELETE: (workspace_id: string) => `/workspaces/${workspace_id}`,
