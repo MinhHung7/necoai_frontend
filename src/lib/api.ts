@@ -12,12 +12,18 @@ export const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     // Use localStorage for access_token (required for authentication)
-  const token = localStorage.getItem("access_token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+    const token = localStorage.getItem("access_token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     } else {
-      console.warn("No access token found in localStorage. Request might fail with 401.");
-  }
+      // Don't warn for public endpoints (login, register, etc.)
+      const publicPaths = ["/auth/login", "/auth/signup", "/auth/google"];
+      const isPublic = publicPaths.some((path) => config.url?.includes(path));
+      
+      if (!isPublic) {
+        console.warn("No access token found in localStorage. Request might fail with 401.");
+      }
+    }
   return config;
   },
   (error) => {
