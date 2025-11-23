@@ -1,12 +1,8 @@
 {
-  "rewrites": [
-    {
-      "source": "/api/:path*",
-      "destination": "https://35.189.8.131.nip.io/api/v1/:path*"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
-  ]
+	"rewrites": [
+		{
+			"source": "/api/v1/:path*",
+			"destination": "http://35.189.8.131:8000/api/v1/:path*"
+		}
+	]
 }
