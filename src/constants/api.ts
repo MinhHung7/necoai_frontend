@@ -1,7 +1,7 @@
 // constants/api.ts
 
 // Base URL — prefer env, fallback for local dev
-export const API_BASE_URL = "http://35.189.8.131:8000/api/v1";
+export const API_BASE_URL = "https://35.189.8.131.nip.io/api/v1";
 
 // Common API paths grouped by domain
 export const API = {
