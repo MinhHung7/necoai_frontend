@@ -5,6 +5,7 @@ import { MOCK_EXECUTION_OUTPUT } from "../../mockdata/MockExecutionOutput";
 
 interface LogSectionProps {
   logs: ExecutionLog[];
+  executionOutput?: any[];
 }
 
 // Format execution output into readable document format
@@ -150,10 +151,13 @@ const formatExecutionOutput = (executionData: any[]): string => {
   return document;
 };
 
-const LogSection = ({ logs }: LogSectionProps) => {
+const LogSection = ({ logs, executionOutput: propExecutionOutput }: LogSectionProps) => {
   const [activeTab, setActiveTab] = useState<"log" | "output">("log");
-  const [executionOutput, setExecutionOutput] = useState<any[]>([]);
+  const [internalExecutionOutput, setInternalExecutionOutput] = useState<any[]>([]);
   const hasCheckedExecutionRef = useRef<Set<string>>(new Set());
+  
+  // Use prop if available, otherwise fall back to internal state (for mock workflow)
+  const executionOutput = propExecutionOutput || internalExecutionOutput;
   
   // Resizable height state
   const DEFAULT_HEIGHT = 192;
@@ -177,8 +181,11 @@ const LogSection = ({ logs }: LogSectionProps) => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Check logs for successful execution and show output
+  // Check logs for successful execution and show output (Mock Mode Only)
   useEffect(() => {
+    // Only use this logic if no prop is provided (Mock Mode)
+    if (propExecutionOutput) return;
+
     const successLog = logs.find(log => 
       log.status === "success" && 
       log.message.includes("Workflow execution started successfully") &&
@@ -200,17 +207,17 @@ const LogSection = ({ logs }: LogSectionProps) => {
 
         // Show mock execution output when successful log is found
         if (Array.isArray(MOCK_EXECUTION_OUTPUT) && MOCK_EXECUTION_OUTPUT.length > 0) {
-          setExecutionOutput([...MOCK_EXECUTION_OUTPUT]);
+          setInternalExecutionOutput([...MOCK_EXECUTION_OUTPUT]);
         }
       }
     } else {
       // Clear output if no success log found
-      if (executionOutput.length > 0) {
-        setExecutionOutput([]);
+      if (internalExecutionOutput.length > 0) {
+        setInternalExecutionOutput([]);
         hasCheckedExecutionRef.current.clear();
       }
     }
-  }, [logs, executionOutput.length]);
+  }, [logs, internalExecutionOutput.length, propExecutionOutput]);
 
   const getStatusIcon = (status: ExecutionLog["status"]) => {
     switch (status) {

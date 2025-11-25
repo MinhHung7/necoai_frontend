@@ -298,7 +298,7 @@ const WorkflowContent = ({ workspaceId, systemId }: WorkflowContentProps) => {
     setIsRunning(true);
     
     try {
-      // Convert workflow to backend JSON format
+      // Convert workflow to backend JSON format (only needed for mock or create)
       const workflowJson = {
         id: isMockWorkflow ? MOCK_SYSTEM_ID : (workflow?.id || mockWorkflowId),
         name: workflow?.name || "Daily Feedback Batch Processor",
@@ -342,42 +342,88 @@ const WorkflowContent = ({ workspaceId, systemId }: WorkflowContentProps) => {
         executionOutputRef.current = mockOutput;
         setExecutionOutput(mockOutput);
       } else {
-        toast.loading("Creating execution...", { id: "execution-loading" });
-        const execution = await ExecutionService.createExecution({
-          system_id: systemIdToUse,
-          system_json: workflowJson,
-          status: "running",
-        });
-        
-        executionId = execution.id;
+        // ALWAYS use this specific execution ID as requested
+        executionId = "ab9d7305-d11a-419e-8216-f1727534adb7";
         
         toast.loading("Starting workflow execution...", { id: "execution-loading" });
         
-        await ExecutionService.startExecution(executionId);
+        // 1. Call start execution with fixed ID
+        const startResponse = await ExecutionService.startExecution(executionId);
+        const instanceId = startResponse.instance_id;
         
-        setTimeout(async () => {
+        if (!instanceId) {
+          throw new Error("No instance ID returned from execution start");
+        }
+        
+        toast.loading("Workflow running... Waiting for results...", { id: "execution-loading" });
+        
+        // 2. Poll for results using instance_id
+        const pollInterval = 2000; // 2 seconds
+        const maxAttempts = 90; // 3 minutes total
+        let attempts = 0;
+        
+        const pollResults = async () => {
           try {
-            const executionResult = await ExecutionService.getExecution(executionId);
-            if (executionResult.logs) {
-              try {
-                const logsData = typeof executionResult.logs === "string" 
-                  ? JSON.parse(executionResult.logs) 
-                  : executionResult.logs;
-                if (Array.isArray(logsData) && logsData.length > 0) {
-                  setExecutionOutput(logsData);
-                  executionOutputRef.current = logsData;
-                }
-              } catch (parseError) {
-                // Error parsing execution logs
-              }
+            const results = await ExecutionService.getExecutionResults(executionId, instanceId);
+            
+            if (Array.isArray(results) && results.length > 0) {
+              // Results found!
+              setExecutionOutput(results);
+              executionOutputRef.current = results;
+              
+              // Success - add log and show toast
+              const newLog: ExecutionLog = {
+                id: `log-${Date.now()}`,
+                timestamp: new Date().toLocaleTimeString("en-US", {
+                  hour12: false,
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  second: "2-digit",
+                }),
+                message: `Workflow execution completed successfully (Execution ID: ${executionId})`,
+                status: "success",
+              };
+              addLog(newLog);
+              
+              toast.success("Workflow execution completed successfully!", {
+                id: "execution-loading",
+                description: `Execution ID: ${executionId} - Check Output tab for execution results`,
+              });
+              setIsRunning(false);
+              return true; // Stop polling
             }
-          } catch (fetchError) {
-            // Error fetching execution output
+          } catch (error) {
+            // Ignore errors during polling, just keep trying
+            console.log("Polling for results...", error);
           }
-        }, 3000);
+          
+          return false; // Continue polling
+        };
+        
+        // Start polling loop
+        const runPoll = async () => {
+          if (attempts >= maxAttempts) {
+            setIsRunning(false);
+            toast.error("Execution timed out waiting for results", { id: "execution-loading" });
+            return;
+          }
+          
+          attempts++;
+          const finished = await pollResults();
+          
+          if (!finished) {
+            setTimeout(runPoll, pollInterval);
+          }
+        };
+        
+        // Start the first poll
+        setTimeout(runPoll, pollInterval);
+        
+        // Return early to let the polling handle the rest
+        return; 
       }
       
-      // Success - add log and show toast
+      // Success - add log and show toast (for mock workflow only)
       const newLog: ExecutionLog = {
         id: `log-${Date.now()}`,
         timestamp: new Date().toLocaleTimeString("en-US", {
@@ -415,7 +461,10 @@ const WorkflowContent = ({ workspaceId, systemId }: WorkflowContentProps) => {
         description: error.message || "Please try again.",
       });
     } finally {
-      setIsRunning(false);
+      if (isMockWorkflow) {
+        setIsRunning(false);
+      }
+      // For real workflow, isRunning is handled in the polling loop
     }
   };
 
@@ -633,6 +682,7 @@ const WorkflowContent = ({ workspaceId, systemId }: WorkflowContentProps) => {
             {/* Bottom - Execution Logs */}
             <LogSection
               logs={logs}
+              executionOutput={executionOutput}
             />
           </div>
 

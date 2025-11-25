@@ -40,6 +40,8 @@ export const API = {
     CREATE: "/executions",
     GET_BY_ID: (execution_id: string) => `/executions/${execution_id}`,
     START: (execution_id: string) => `/executions/${execution_id}`,
+    GET_RESULTS: (execution_id: string, instance_id: string) =>
+      `/executions/${execution_id}/results/${instance_id}`,
   },
 
   USER: {

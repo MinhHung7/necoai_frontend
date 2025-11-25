@@ -21,6 +21,7 @@ export type SystemExecutionResponse = {
 
 export type StartExecutionResponse = {
   message: string;
+  instance_id?: string;
 };
 
 export const ExecutionService = {
@@ -68,6 +69,24 @@ export const ExecutionService = {
       return data;
     } catch (error: any) {
       console.error("Error starting execution:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get execution results by instance ID
+   */
+  async getExecutionResults(
+    execution_id: string,
+    instance_id: string
+  ): Promise<any[]> {
+    try {
+      const { data } = await api.post<any[]>(
+        API.EXECUTION.GET_RESULTS(execution_id, instance_id)
+      );
+      return data;
+    } catch (error: any) {
+      console.error("Error fetching execution results:", error);
       throw error;
     }
   },
